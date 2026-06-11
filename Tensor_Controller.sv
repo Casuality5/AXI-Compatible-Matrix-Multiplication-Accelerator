@@ -433,7 +433,8 @@ typedef enum logic [3:0] {
                                         
                                         end
                                                             
-                                                              
+
+                              default : ;                               
                     endcase                                                           
           end                                                           
                                                            
