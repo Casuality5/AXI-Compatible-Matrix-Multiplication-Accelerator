@@ -167,16 +167,13 @@ typedef enum logic [3:0] {
                     CLR = 1'b0;
                     CLR_IN = 1'b0;
 
-                    STATUS_REG = 32'b0;
+                    STATUS_REG = 32'b1;
                     
                     case (CURRENT_STAGE)
                               
                               IDLE : begin
+                                        STATUS_REG = 32'b0;
                                         if (CONTROL_REG[0] == 1'b1) begin
-                                                  
-                                                  
-                                        
-                                                  STATUS_REG = 32'b1;
                                                   
                                                   NEXT_STAGE = DMA_FETCH_STAGE;
                                                   end 
@@ -292,6 +289,7 @@ typedef enum logic [3:0] {
                               BUFFER_STAGE : begin
                                         
                                         VALID_BUFFER_IN = 1'b1;
+                                        CLR_IN = 1'b1;
                                         
                                         if (VALID_BUFFER_OUT) NEXT_STAGE = REGISTER_STAGE;
                                         
@@ -314,6 +312,7 @@ typedef enum logic [3:0] {
                               COMPUTE_STAGE : begin                                                           // CHECK FOR CLR LOGIC (CURRENTLY SYSTOLIC)
                               
                                         VALID_IN_ARRAY = 1'b1;
+                                        CLR = 1'b1;
                                         
                                         if (VALID) NEXT_STAGE = UNPACKING_STAGE;
                                         
