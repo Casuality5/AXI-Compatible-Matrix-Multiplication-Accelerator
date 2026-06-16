@@ -7,7 +7,8 @@ module Memory_Mapped_IO(
           input logic WE,
           input logic RE,
           
-          output logic [31:0]CONTROL_REG,
+          output logic [31:0] READ_DATA,
+          output logic [31:0] CONTROL_REG,
           output logic [31:0] STATUS_REG,
           output logic [31:0] SRCA_ADDR_REG,
           output logic [31:0] SRCB_ADDR_REG,
@@ -70,37 +71,28 @@ logic [31:0] performance_reg;
                                      
                     
     
+    assign CONTROL_REG     = control_reg;
+    assign STATUS_REG      = status_reg;
+    assign SRCA_ADDR_REG   = srca_addr_reg;
+    assign SRCB_ADDR_REG   = srcb_addr_reg;
+    assign DEST_ADDR_REG   = dest_addr_reg;
+    assign PERFORMANCE_REG = performance_reg;
+    assign NAME_REG        = 64'h4F7074696D75734E;
+
     always_comb begin
-          CONTROL_REG     = 0;
-          STATUS_REG      = 0;
-          SRCA_ADDR_REG   = 0;
-          SRCB_ADDR_REG   = 0;
-          DEST_ADDR_REG   = 0;
-          PERFORMANCE_REG = 0;
-          NAME_REG        = 0;          
+          READ_DATA = 0;
           if (RE) begin
-                    
                     case (ADDRESS)
-                              
-                              CONTROL : CONTROL_REG = control_reg;
-                              
-                              STATUS : STATUS_REG = status_reg;
-                              
-                              SRCA_ADDR : SRCA_ADDR_REG = srca_addr_reg;
-                              
-                              SRCB_ADDR : SRCB_ADDR_REG = srcb_addr_reg;
-                              
-                              DEST_ADDR : DEST_ADDR_REG = dest_addr_reg;
-                              
-                              PERFORMANCE : PERFORMANCE_REG = performance_reg;
-                              
-                              NAME : NAME_REG = 64'h4F7074696D75734E;
-                                                          
-                              default : ;
-                              
-                              endcase
-                              
-                              end
-                              end
+                              CONTROL : READ_DATA = control_reg;
+                              STATUS : READ_DATA = status_reg;
+                              SRCA_ADDR : READ_DATA = srca_addr_reg;
+                              SRCB_ADDR : READ_DATA = srcb_addr_reg;
+                              DEST_ADDR : READ_DATA = dest_addr_reg;
+                              PERFORMANCE : READ_DATA = performance_reg;
+                              NAME : READ_DATA = 32'h6D75734E;
+                              default : READ_DATA = 0;
+                    endcase
+          end
+    end
      
 endmodule

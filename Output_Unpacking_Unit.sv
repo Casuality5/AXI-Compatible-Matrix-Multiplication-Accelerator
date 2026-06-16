@@ -1,4 +1,4 @@
-module Output_Unpacking_Unit(
+module Output_Buffer(
     input  logic CLK,
     input  logic RST,
     input  logic START,
@@ -7,10 +7,10 @@ module Output_Unpacking_Unit(
     input  logic signed [33:0] ACCUMULATE_IN [0:3][0:3],
 
     output logic DONE,
-    output logic signed [33:0] ACCUMULATE_OUT
+    output logic signed [33:0] READ_OUT
 );
 
-    logic signed [33:0] MEM [0:511];
+    logic signed [33:0] MEM [0:15];
     logic [8:0] COUNTER;
 
     logic START_D;
@@ -53,11 +53,11 @@ module Output_Unpacking_Unit(
         end
     end
     
-    always_ff @(posedge CLK) begin
-        if (RST)
-            ACCUMULATE_OUT <= '0;
-        else if (RE)
-            ACCUMULATE_OUT <= MEM[ADDR];
+    always_comb begin
+        if (RE)
+            READ_OUT = MEM[ADDR];
+        else
+            READ_OUT = '0;
     end
 
 endmodule

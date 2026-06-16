@@ -1,11 +1,12 @@
 module Tensor_Registers(
+
     input logic CLK,
     input logic RST,
-    input logic CLR,
+    input logic CLR_IN,
     input logic [447:0] SRCA,
     input logic [447:0] SRCB,
-    input logic VALID_TR,
-    output logic VALID_OUT_TR,
+    input logic VALID_REGISTER_IN,
+    output logic VALID_REGISTER_OUT,
     output logic signed [15:0] ROW_OUT [0:3],
     output logic signed [15:0] COL_OUT [0:3]
 );
@@ -19,17 +20,17 @@ module Tensor_Registers(
     logic START_TRIGGER;
     
     always_ff @(posedge CLK) begin
-        if (RST || CLR) begin
+        if (RST || CLR_IN) begin
             VALID_TR_D1 <= 0;
         end else begin
-            VALID_TR_D1 <= VALID_TR;
+            VALID_TR_D1 <= VALID_REGISTER_IN;
         end
     end
     
-    assign START_TRIGGER = VALID_TR && !VALID_TR_D1;
+    assign START_TRIGGER = VALID_REGISTER_IN && !VALID_TR_D1;
         
     always_ff @(posedge CLK) begin
-        if (RST || CLR) begin
+        if (RST || CLR_IN) begin
             ROWS[0] <= 0;
             ROWS[1] <= 0;
             ROWS[2] <= 0;
@@ -65,25 +66,25 @@ module Tensor_Registers(
     end
         
     always_ff @(posedge CLK) begin
-        if (RST || CLR) begin
+        if (RST || CLR_IN) begin
             INDEX <= 0;
-            VALID_OUT_TR <= 0;
+            VALID_REGISTER_OUT <= 0;
             RUNNING <= 0;
         end else if (START_TRIGGER) begin
             RUNNING <= 1;
             INDEX <= 0;
-            VALID_OUT_TR <= 1;
+            VALID_REGISTER_OUT <= 1;
         end else if (RUNNING) begin
             if (INDEX == 3'd6) begin
                 RUNNING <= 0;
                 INDEX <= 0;
-                VALID_OUT_TR <= 0;
+                VALID_REGISTER_OUT <= 0;
             end else begin
                 INDEX <= INDEX + 1;
-                VALID_OUT_TR <= 1;
+                VALID_REGISTER_OUT <= 1;
             end
         end else begin
-            VALID_OUT_TR <= 0;
+            VALID_REGISTER_OUT <= 0;
             INDEX <= 0;
         end
     end

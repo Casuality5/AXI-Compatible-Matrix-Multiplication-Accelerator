@@ -1,85 +1,162 @@
-module OptimusN(
-    input  logic        CLK,
-    input  logic        RST,
-
-    input  logic        READY,
-    input  logic [31:0] SRC_ADDR_BUS [0:3],
-    output logic [31:0] STATUS_ADDR_BUS,
-    output logic        LOAD_to_Tensor_DataPath,
-    output logic        UNLOAD_from_Tensor_DataPath,
-
-    input  logic signed [15:0] UNPACKED_INPUT_A,
-    input  logic signed [15:0] UNPACKED_INPUT_B,
-    output logic        READY_A,
-    output logic        READY_B,
-    input  logic [8:0]  ADDRESS,
-    input  logic        WD,
-    input  logic        RE,
-    input  logic [8:0]  ADDR,
-    input  logic        OUURE,
-    output logic signed [33:0] ACCUMULATE_OUT
-);
-
-    logic skew;
-    logic skew_done;
-    logic valid_buffer_in;
-    logic valid_buffer_out;
-    logic valid_register_in;
-    logic clr_in;
-    logic valid_register_out;
-    logic valid_in_array;
-    logic valid;
-    logic ckr;
-    logic start;
-    logic done;
-
-    Tensor_ControlPath TCP (
-        .CLK                        (CLK),
-        .RST                        (RST),
-        .READY                      (READY),
-        .SKEW                       (skew),
-        .SKEW_DONE                  (skew_done),
-        .VALID_BUFFER_IN            (valid_buffer_in),
-        .VALID_BUFFER_OUT           (valid_buffer_out),
-        .VALID_REGISTER_IN          (valid_register_in),
-        .CLR_IN                     (clr_in),
-        .VALID_REGISTER_OUT         (valid_register_out),
-        .VALID_IN_ARRAY             (valid_in_array),
-        .VALID                      (valid),
-        .CKR                        (ckr),
-        .START                      (start),
-        .DONE                       (done),
-        .LOAD_to_Tensor_DataPath    (LOAD_to_Tensor_DataPath),
-        .UNLOAD_from_Tensor_DataPath(UNLOAD_from_Tensor_DataPath),
-        .SRC_ADDR_BUS               (SRC_ADDR_BUS),
-        .STATUS_ADDR_BUS            (STATUS_ADDR_BUS)
+module Top(
+          input logic CLK,
+          input logic RST,
+          
+          input logic [31:0] MMIO_DATA,
+          input logic [2:0] MMIO_ADDRESS,
+          input logic MMIO_WE,
+          input logic MMIO_RE,
+          output logic [31:0] MMIO_READ_DATA,
+          
+          output logic DDR_RE,
+          output logic DDR_WE,
+          output logic [31:0] ACTUAL_DDR_ADDRESS_A,
+          output logic [31:0] ACTUAL_DDR_ADDRESS_B,
+          output logic [31:0] ACTUAL_DDR_ADDRESS_C,
+          input logic [15:0] DDR_IN_A,
+          input logic [15:0] DDR_IN_B,
+          output logic [33:0] DDR_OUT_C,
+          output logic DONE
     );
-
-    Tensor_DataPath TDP (
-        .CLK              (CLK),
-        .RST              (RST),
-        .UNPACKED_INPUT_A  (UNPACKED_INPUT_A),
-        .UNPACKED_INPUT_B  (UNPACKED_INPUT_B),
-        .READY_A           (READY_A),
-        .READY_B           (READY_B),
-        .SKEW              (skew),
-        .SKEW_DONE         (skew_done),
-        .ADDRESS           (ADDRESS),
-        .WD                (WD),
-        .RE                (RE),
-        .VALID_BUFFER_IN   (valid_buffer_in),
-        .VALID_BUFFER_OUT  (valid_buffer_out),
-        .CLR               (clr_in),
-        .VALID_TR          (valid_register_in),
-        .VALID_OUT_TR      (valid_register_out),
-        .VALID_IN_ARRAY    (valid_in_array),
-        .SACLR             (ckr),
-        .VALID             (valid),
-        .START             (start),
-        .ADDR              (ADDR),
-        .OUURE             (OUURE),
-        .DONE              (done),
-        .ACCUMULATE_OUT    (ACCUMULATE_OUT)
+    
+    logic SKEW_WIRE;
+    logic CLR_IN_WIRE;
+    logic CLR_ACCUMULATE_WIRE;
+    logic START_WIRE;
+    logic DONE_WIRE;
+    logic READY_WIRE;
+    logic VALID_OUT_CONTROLLER_WIRE;
+    logic [3:0] SRAM_ADDRESS_WIRE [0:1];
+    logic SRAM_WRITE_WIRE;
+    logic SRAM_READ_WIRE;
+    logic [15:0] SRAM_READ_DATA_A;
+    logic [15:0] SRAM_READ_DATA_B;
+    logic [33:0] OUTPUT_BUFFER_IN_WIRE;
+    logic OUTPUT_BUFFER_RE_WIRE;
+    logic PACKING_ENABLE_WIRE;
+    logic [15:0] SRAM_WRITE_WIRE_A;
+    logic [15:0] SRAM_WRITE_WIRE_B;
+    
+          logic [8:0] OUTPUT_BUFFER_ADDR; 
+          logic [31:0] CONTROL_REG_WIRE; 
+          logic [31:0] SRC_A_ADDRESS_WIRE;
+          logic [31:0] SRC_B_ADDRESS_WIRE;
+          logic [31:0] DEST_ADDRESS_WIRE;
+          logic [31:0] DUMMY_STATUS_REG;
+          logic [31:0] DUMMY_PERFORMANCE_REG;
+          logic [63:0] DUMMY_NAME_REG;
+    
+    assign DONE = DONE_WIRE;
+    
+    Memory_Mapped_IO MMIO_INST (
+          .CLK(CLK),
+          .RST(RST),
+          
+          .DATA(MMIO_DATA),
+          .ADDRESS(MMIO_ADDRESS),
+          .WE(MMIO_WE),
+          .RE(MMIO_RE),
+          
+          .READ_DATA(MMIO_READ_DATA),
+          .CONTROL_REG(CONTROL_REG_WIRE),
+          .STATUS_REG(DUMMY_STATUS_REG),
+          .SRCA_ADDR_REG(SRC_A_ADDRESS_WIRE),
+          .SRCB_ADDR_REG(SRC_B_ADDRESS_WIRE),
+          .DEST_ADDR_REG(DEST_ADDRESS_WIRE),
+          .PERFORMANCE_REG(DUMMY_PERFORMANCE_REG),
+          .NAME_REG(DUMMY_NAME_REG)
     );
-
+    
+    Data_Path DP(
+          
+          .CLK(CLK),
+          .RST(RST),
+          .PACKING_ENABLE(PACKING_ENABLE_WIRE),
+          .SKEW(SKEW_WIRE),
+          .CLR_IN(CLR_IN_WIRE),
+          .CLR_ACCUMULATE(CLR_ACCUMULATE_WIRE),
+          .START(START_WIRE),
+          .ADDR(OUTPUT_BUFFER_ADDR),
+          .RE(OUTPUT_BUFFER_RE_WIRE),
+          
+          .UNPACKED_INPUT_A(SRAM_READ_DATA_A),
+          .UNPACKED_INPUT_B(SRAM_READ_DATA_B),
+          
+          .READY(READY_WIRE),
+          .VALID_OUT_CONTROLLER(VALID_OUT_CONTROLLER_WIRE),
+          .DONE(DONE_WIRE),
+          .READ_OUT(OUTPUT_BUFFER_IN_WIRE)
+          );
+          
+    
+    DMAC DMA(
+          
+          .CLK(CLK),
+          .RST(RST),
+          
+          .READY(READY_WIRE),
+          .VALID_OUT_CONTROLLER(VALID_OUT_CONTROLLER_WIRE),
+          
+          .CONTROL_REG(CONTROL_REG_WIRE), //
+          
+          .DDR_IN_A(DDR_IN_A),     //
+          .DDR_IN_B(DDR_IN_B),     //
+          
+          .SRC_A_ADDRESS(SRC_A_ADDRESS_WIRE),     //
+          .SRC_B_ADDRESS(SRC_B_ADDRESS_WIRE),     //
+          
+          .OUTPUT_BUFFER_IN(OUTPUT_BUFFER_IN_WIRE),         //
+          .DEST_ADDRESS(DEST_ADDRESS_WIRE),       //
+          
+          .DONE(DONE_WIRE),
+          
+          .DDR_RE(DDR_RE),
+          .DDR_WE(DDR_WE),
+          
+          .SRAM_WE(SRAM_WRITE_WIRE),
+          .SRAM_RE(SRAM_READ_WIRE),
+          
+          .OUTPUT_BUFFER_RE(OUTPUT_BUFFER_RE_WIRE),
+          .OUTPUT_BUFFER_ADDR(OUTPUT_BUFFER_ADDR),
+          
+          .SRAM_ADDRESS(SRAM_ADDRESS_WIRE),
+          .SRAM_WRITE_A(SRAM_WRITE_WIRE_A),
+          .SRAM_WRITE_B(SRAM_WRITE_WIRE_B),
+          
+          .SKEW(SKEW_WIRE),
+          .START(START_WIRE),
+          .CLR_IN(CLR_IN_WIRE),
+          .CLR_ACCUMULATE(CLR_ACCUMULATE_WIRE),
+          
+          .ACTUAL_DDR_ADDRESS_A(ACTUAL_DDR_ADDRESS_A),
+          .ACTUAL_DDR_ADDRESS_B(ACTUAL_DDR_ADDRESS_B),
+          .ACTUAL_DDR_ADDRESS_C(ACTUAL_DDR_ADDRESS_C),
+          .DDR_OUT_C(DDR_OUT_C),
+          
+          .PACKING_ENABLE(PACKING_ENABLE_WIRE)
+          );
+    
+    SRAM_A RAMA(
+          
+          .CLK(CLK),
+          .WE(SRAM_WRITE_WIRE),
+          .RE(SRAM_READ_WIRE),
+          .ADDR(SRAM_ADDRESS_WIRE[0]),
+          .WRITE_DATA(SRAM_WRITE_WIRE_A),
+          .READ_DATA(SRAM_READ_DATA_A)
+          );
+               
+    
+    SRAM_B RAMB(
+          
+          .CLK(CLK),
+          .WE(SRAM_WRITE_WIRE),
+          .RE(SRAM_READ_WIRE),
+          .ADDR(SRAM_ADDRESS_WIRE[1]),
+          .WRITE_DATA(SRAM_WRITE_WIRE_B),
+          .READ_DATA(SRAM_READ_DATA_B)
+          );
+    
+   
+    
 endmodule

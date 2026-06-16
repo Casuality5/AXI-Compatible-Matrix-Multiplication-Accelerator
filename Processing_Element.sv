@@ -10,10 +10,8 @@ module Processing_Element (
     output logic CLR_OUT_A, CLR_OUT_B
 );
 
-logic clr_prev;
-wire clr_edge = (CLR_IN_A && CLR_IN_B) && !clr_prev;
 
-logic signed [31:0] product;
+
 
 always_ff @(posedge CLK) begin
     if (RST) begin
@@ -24,27 +22,21 @@ always_ff @(posedge CLK) begin
         VALID_OUTB  <= 0;
         CLR_OUT_A   <= 0;
         CLR_OUT_B   <= 0;
-        clr_prev    <= 0;
-        product     <= 0;
-
-    end else begin
-        // Pipeline registers propagate data uninterrupted
+    end
+    else begin
         SRCA_OUT    <= SRCA;
         SRCB_OUT    <= SRCB;
         VALID_OUTA  <= VALID_INA;
         VALID_OUTB  <= VALID_INB;
         CLR_OUT_A   <= CLR_IN_A;
         CLR_OUT_B   <= CLR_IN_B;
-        product     <= SRCA * SRCB; // Compute product for next cycle's accumulation
 
-        clr_prev    <= (CLR_IN_A && CLR_IN_B);
-
-        if (clr_edge) begin
-            // Restart accumulation seamlessly for zero-gap back-to-back matrices
-            ACCUMULATE  <= product;
-        end else if (VALID_INA && VALID_INB) begin
-            ACCUMULATE  <= ACCUMULATE + product;
-        end
+        if (CLR_IN_A) begin
+                    ACCUMULATE <= 0;
+                    end
+                    else if (VALID_INA && VALID_INB) begin
+                    ACCUMULATE <= ACCUMULATE + SRCA * SRCB;
+                    end
     end
 end
 

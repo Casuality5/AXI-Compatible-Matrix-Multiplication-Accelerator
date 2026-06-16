@@ -2,11 +2,11 @@ module Systolic_Array(
     input logic CLK,
     input logic RST,
     input logic VALID_IN_ARRAY,
-    input logic CLR,
+    input logic CLR_ACCUMULATE,
     input logic signed [15:0] W_A [0:3],
     input logic signed [15:0] W_B [0:3],
     output logic signed [33:0] ACCUMULATE_OUT [0:3][0:3],
-    output logic VALID
+    output logic VALID_OUT_CONTROLLER
 );
 
 
@@ -47,8 +47,8 @@ generate
                 .VALID_OUTA(PE_to_PE_Valid_A[ROW][COL+1]),
                 .VALID_OUTB(PE_to_PE_Valid_B[ROW+1][COL]),
                 
-                .CLR_IN_A(PE_to_PE_CLR_A[ROW][COL]),
-                .CLR_IN_B(PE_to_PE_CLR_B[ROW][COL]),
+                .CLR_IN_A(CLR_ACCUMULATE),
+                .CLR_IN_B(CLR_ACCUMULATE),
                 
                 .CLR_OUT_A(PE_to_PE_CLR_A[ROW][COL+1]),
                 .CLR_OUT_B(PE_to_PE_CLR_B[ROW+1][COL])
@@ -86,11 +86,11 @@ generate
 generate
     
     for (ROW = 0; ROW<4; ROW++) begin
-        assign PE_to_PE_CLR_A[ROW][0] = CLR;
+        assign PE_to_PE_CLR_A[ROW][0] = CLR_ACCUMULATE;
         end
     
     for (COL = 0; COL<4; COL++) begin
-        assign PE_to_PE_CLR_B[0][COL] = CLR;
+        assign PE_to_PE_CLR_B[0][COL] = CLR_ACCUMULATE;
         end
         
         endgenerate
@@ -120,6 +120,6 @@ always_ff @(posedge CLK) begin
     end
 end
 
-assign VALID = VALID_D6 && VALID_OUT_TESTPIN;
+assign VALID_OUT_CONTROLLER = VALID_D6 && VALID_OUT_TESTPIN;
 
 endmodule
