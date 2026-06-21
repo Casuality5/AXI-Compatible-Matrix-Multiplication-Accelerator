@@ -24,7 +24,7 @@ localparam CHUNK14  = 4'hD;
 localparam CHUNK15  = 4'hE;
 localparam CHUNK16  = 4'hF;
 
-logic [255:0] INTERMEDIATE_PACKED_UNIT;    
+    
 logic [3:0] COUNT_B;
 
    always_ff @(posedge CLK) begin
