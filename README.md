@@ -11,20 +11,6 @@ OptimusN is a SystemVerilog RTL implementation of a DMA-driven tensor accelerato
 
 The accelerator is structured around a DMA-control engine and a modular compute datapath.
 
-```mermaid
-flowchart LR
-    CPU["Host / CPU"] -->|"AXI4-Lite MMIO"| MMIO["AXI4-Lite Slave\nMMIO Register Block"]
-    MEM["External Memory"] <-->|"AXI4 master reads / writes"| DMA["DMA-Control Engine"]
-    MMIO -->|"Configuration"| DMA
-    DMA -->|"Fetched operands"| IPU["Input Packing Unit"]
-    IPU --> SKEW["Tensor Input Skewer"]
-    SKEW --> TBUF["Tensor Buffer"]
-    TBUF --> TREG["Tensor Registers"]
-    TREG --> SA["4 x 4 Systolic Array\n16 Processing Elements"]
-    SA --> OBUF["Tensor Output Buffer"]
-    OBUF -->|"Results"| DMA
-```
-
 ### Operation flow
 
 1. Software configures source, destination, and control registers through AXI4-Lite MMIO.
