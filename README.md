@@ -2,9 +2,6 @@
 
 OptimusN is a SystemVerilog RTL implementation of a DMA-driven tensor accelerator for 4 x 4 matrix multiplication. The design combines an AXI4-Lite control plane with an AXI4 master DMA engine to fetch operands, sequence the datapath, execute the matrix operation, and write results back to memory.
 
-**Authors:** Parth Sharma, Tanya Gupta, Kaushiki Chhabra  
-**Team:** Nano Core, 571
-
 ![OptimusN block diagram](<Block Diagram.png>)
 
 ## Architecture
